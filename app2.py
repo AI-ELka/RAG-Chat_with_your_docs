@@ -16,8 +16,8 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from transformers import AutoTokenizer
 
-# Assuming you have already loaded a Mistral model tokenizer
-tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
+# # Assuming you have already loaded a Mistral model tokenizer
+# tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.1")
 
 
 def get_pdf_text(pdf_docs):
@@ -54,7 +54,7 @@ def get_vectorstore(text_chunks):
 
 def get_conversation_chain(vectorstore):
 
-    llm = HuggingFaceEndpoint(repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1", temperature=0.1, max_new_tokens=512,task="text-generation")
+    llm = HuggingFaceEndpoint(repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1", temperature=0.1, max_new_tokens=512,task="text-generation",huggingfacehub_api_token="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")
     # messages = [
     #     {"role": "user", "content": "You are an helpful assistant named Akai. Answer the user's questions {input} in his language based on the below context:"},
     #     {"role": "assistant", "content": "Sure. How can I help?"},
