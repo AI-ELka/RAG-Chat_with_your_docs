@@ -78,18 +78,28 @@ def get_conversation_chain(vectorstore):
     conversation_chain=create_retrieval_chain(retriever=retriever_chain, combine_docs_chain=combine_docs_chain)
     return conversation_chain
 
+def no_docs_chat(user_question):
+    llm = HuggingFaceEndpoint(repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1", temperature=0.1, max_new_tokens=512,task="text-generation")
+
+    prompt = ChatPromptTemplate.from_messages([
+        "<s>[INST] Answer directly and concisely the user's questions in his language based on the context[/INST] {chat_history}",
+        "[INST] {input} [/INST]"
+    ])
+    chain= prompt | llm
+
+    return chain
 
 def handle_userinput(user_question):
     response = st.session_state.conversation.invoke({
         'input': "[INST]"  +   user_question   +  "[/INST]",
         'chat_history' : st.session_state.chat_history
         })
+    print(f" \n\n\n\n {response}\n\n\n\n")
     # Append the user's question and the bot's response to the chat history
     st.session_state.chat_history+="[INST]"  +   user_question   +  "[/INST]"
     st.session_state.chat_history+=response['answer']  +"</s>"
     st.session_state.chat.extend([{"role":"user", "content": user_question},{"role": "assistant", "content":  response['answer']}])
 
-    print(f" \n\n\n\n {response}\n\n\n\n")
     # st.session_state.chat_history = response['chat_history']
     for i, value in enumerate(st.session_state.chat):
         if i % 2 == 0:
@@ -101,6 +111,28 @@ def handle_userinput(user_question):
             st.write(bot_template.replace(
                 "{{MSG}}", answer["content"]), unsafe_allow_html=True)
 
+
+def handle_userinput_nodocs(user_question):
+    response = st.session_state.conversation.invoke({
+        'input': "[INST]"  +   user_question   +  "[/INST]",
+        'chat_history' : st.session_state.chat_history
+        })
+    print(f" \n\n\n\n {response}\n\n\n\n")
+    # Append the user's question and the bot's response to the chat history
+    st.session_state.chat_history+="[INST]"  +   user_question   +  "[/INST]"
+    st.session_state.chat_history+=response  +"</s>"
+    st.session_state.chat.extend([{"role":"user", "content": user_question},{"role": "assistant", "content":  response}])
+
+    # st.session_state.chat_history = response['chat_history']
+    for i, value in enumerate(st.session_state.chat):
+        if i % 2 == 0:
+            st.write(user_template.replace(
+                "{{MSG}}", value["content"]), unsafe_allow_html=True)
+        else:
+
+            answer = value
+            st.write(bot_template.replace(
+                "{{MSG}}", answer["content"]), unsafe_allow_html=True)
 
 def main():
     load_dotenv() 
@@ -117,29 +149,39 @@ def main():
 
 
     st.header("M7b Doc 🌍​")
+    docs=False
     user_question = st.text_input("Ask a question about your documents:")
     if user_question:
-    
-        handle_userinput(user_question)
+        if docs:
+            handle_userinput(user_question)
+        else:
+            handle_userinput_nodocs(user_question)
 
     with st.sidebar:
         st.subheader("Your documents")
         pdf_docs = st.file_uploader(
             "Upload your PDFs here and click on 'Process'", accept_multiple_files=True)
-        if st.button("Process"):
-            with st.spinner("Processing"):
-                # get pdf text
-                raw_text = get_pdf_text(pdf_docs)
+        if pdf_docs:
+            docs=True
+            if st.button("Process"):
+                with st.spinner("Processing"):
+                    # get pdf text
+                    raw_text = get_pdf_text(pdf_docs)
 
-                # get the text chunks
-                text_chunks = get_text_chunks(raw_text)
+                    # get the text chunks
+                    text_chunks = get_text_chunks(raw_text)
 
-                # create vector store
-                vectorstore = get_vectorstore(text_chunks)
+                    # create vector store
+                    vectorstore = get_vectorstore(text_chunks)
 
-                # create conversation chain
-                st.session_state.conversation = get_conversation_chain(
-                    vectorstore)
+                    # create conversation chain
+                    st.session_state.conversation = get_conversation_chain(
+                        vectorstore)
+        else:
+            
+            st.session_state.conversation = no_docs_chat(user_question)
+
+
 
 
 if __name__ == '__main__':
