@@ -4,7 +4,7 @@ from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings, HuggingFaceInstructEmbeddings
 from langchain_community.vectorstores import FAISS 
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from htmlTemplates import css, bot_template, user_template
@@ -120,8 +120,8 @@ def handle_userinput_nodocs(user_question):
     print(f" \n\n\n\n {response}\n\n\n\n")
     # Append the user's question and the bot's response to the chat history
     st.session_state.chat_history+="[INST]"  +   user_question   +  "[/INST]"
-    st.session_state.chat_history+=response  +"</s>"
-    st.session_state.chat.extend([{"role":"user", "content": user_question},{"role": "assistant", "content":  response}])
+    st.session_state.chat_history+=response["answer"]  +"</s>"
+    st.session_state.chat.extend([{"role":"user", "content": user_question},{"role": "assistant", "content":  response["answer"]}])
 
     # st.session_state.chat_history = response['chat_history']
     for i, value in enumerate(st.session_state.chat):
@@ -153,6 +153,9 @@ def main():
     user_question = st.text_input("Ask a question about your documents:")
     if user_question:
         if docs:
+            # st.session_state.chat_history = []
+            # #or transform chat history into a list of dictionaries
+            
             handle_userinput(user_question)
         else:
             handle_userinput_nodocs(user_question)
